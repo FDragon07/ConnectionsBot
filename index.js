@@ -5,6 +5,22 @@ import { CategoryChannel, Client, GatewayIntentBits, Guild, Message, SlashComman
 
 import { DiscordInteractions } from "slash-commands";
 
+import express from 'express';
+
+// Create a new express app
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.set('view engine', 'ejs')
+
+app.get('/', (req, res) => {
+    res.render('pages/index')
+})
+app.listen(port, () => {
+  console.log(`App listening at port ${port}`)
+})
+
+
 // Create a new client instance and sets the intents to the ones we need
 const client = new Client({
     intents: [
