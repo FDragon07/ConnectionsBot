@@ -20,6 +20,7 @@ var splitNumberAndPuzzel = null;
 // create a array of objects to store the data for each user
 var users = [];
 var currentUser = 0;
+var userNotFound = false;
 
 // Log in to Discord with your app's token
 client.login(process.env.DISCORD_TOKEN);
@@ -48,7 +49,15 @@ const interactions = new DiscordInteractions({
 // Create a new slash command called "Stats"
 const command = {
     name: "stats",
-    description: "Collect Connections data from the connections channel and displys it"
+    description: "Collect Connections data from the connections channel and displys it",
+    //adds an option to get the stats of another user
+    options: [
+        {
+            name: "user",
+            description: "The user you want to get the stats of",
+            type: 6,
+        },
+    ],
 };
 
 // Register the command
@@ -57,6 +66,28 @@ await interactions.createApplicationCommand(command)
 // Activates when bot receives an the command
 client.on("interactionCreate", async (interaction) => {
     if (!interaction.isCommand()) return;
+
+    //checks to see if the connections channel is found if not sends a message to the user
+    if (connectionsChannel === null){
+        await interaction.reply({
+            content: ">>> Connections channel not found create a channel called 'connections-🟨🟩🟦🟪' and try again.",
+            ephemeral: true,
+            components: [
+                {
+                    type: 1,
+                    components: [
+                        {
+                            type: 2,
+                            style: 4,
+                            label: "Close",
+                            custom_id: "close",
+                        },
+                    ],
+                },
+            ],
+        });
+        return;
+    }
 
     if (interaction.commandName === "stats") {
         await interaction.reply({
@@ -193,8 +224,6 @@ client.on("interactionCreate", async (interaction) => {
                 }
             }
         }
-        //delete the original reply
-        await interaction.deleteReply();
 
         //Display basic stats for current user and has buttons to switch between users
         //finds where the user is in the array and displays their stats
@@ -203,46 +232,81 @@ client.on("interactionCreate", async (interaction) => {
                 currentUser = i;
             }
         }
-        await interaction.channel.send({
-            content:
-            ">>> **__Stats for " + users[currentUser].name + 
-            "__**:\nNumber of Connections Played: " + users[currentUser].connections + 
-            "\nwin: " + users[currentUser].win +
-            "\nloss: " + users[currentUser].loss +
-            "\nwin rate: " + (users[currentUser].win / (users[currentUser].win + users[currentUser].loss)) * 100 + "%" +
-            "\nCorrect Answers: " + users[currentUser].answerCorrect + 
-            "\nIncorrect Answers: " + users[currentUser].answerIncorrect + 
-            "\nCorrect Answer Rate: " + (users[currentUser].answerCorrect / (users[currentUser].answerCorrect + users[currentUser].answerIncorrect)) * 100 + "%" +
-            "\nYellow Correct: " + users[currentUser].yellowCorrect + 
-            "\nGreen Correct: " + users[currentUser].greenCorrect + 
-            "\nBlue Correct: " + users[currentUser].blueCorrect + 
-            "\nPurple Correct: " + users[currentUser].purpleCorrect,
-            components: [
-                {
-                    type: 1,
+
+        //if the option is used, find the user in the array and display their stats
+        if (interaction.options.data.length > 0){
+            userNotFound = true;
+            for (let i = 0; i < users.length; i++){
+                if (users[i].name === interaction.options.data[0].user.displayName){
+                    currentUser = i;
+                    userNotFound = false;
+                    //stops the loop
+                    i = users.length;
+                }
+            }
+            if (userNotFound === true){
+                await interaction.editReply({
+                    content: ">>> User not found",
                     components: [
                         {
-                            type: 2,
-                            style: 1,
-                            label: "Previous",
-                            custom_id: "previous",
-                        },
-                        {
-                            type: 2,
-                            style: 1,
-                            label: "Next",
-                            custom_id: "next",
-                        },
-                        {
-                            type: 2,
-                            style: 4,
-                            label: "Close",
-                            custom_id: "close",
+                            type: 1,
+                            components: [
+                                {
+                                    type: 2,
+                                    style: 4,
+                                    label: "Close",
+                                    custom_id: "close",
+                                },
+                            ],
                         },
                     ],
-                },
-            ],
-        });
+                });
+            }
+        }        
+
+        //edits the reply to the command with the stats of the user ONLY IF USER IS FOUND
+        if (userNotFound === false) {
+            await interaction.editReply({
+                content:
+                ">>> **__Stats for " + users[currentUser].name + 
+                "__**:\nNumber of Connections Played: " + users[currentUser].connections + 
+                "\nwin: " + users[currentUser].win +
+                "\nloss: " + users[currentUser].loss +
+                "\nwin rate: " + ((users[currentUser].win / (users[currentUser].win + users[currentUser].loss)) * 100).toFixed(2) + "%" +
+                "\nCorrect Answers: " + users[currentUser].answerCorrect + 
+                "\nIncorrect Answers: " + users[currentUser].answerIncorrect + 
+                "\nCorrect Answer Rate: " + ((users[currentUser].answerCorrect / (users[currentUser].answerCorrect + users[currentUser].answerIncorrect)) * 100).toFixed(2) + "%" +
+                "\n🟨 Correct: " + users[currentUser].yellowCorrect + 
+                "\n🟩 Correct: " + users[currentUser].greenCorrect + 
+                "\n🟦 Correct: " + users[currentUser].blueCorrect + 
+                "\n🟪 Correct: " + users[currentUser].purpleCorrect,
+                components: [
+                    {
+                        type: 1,
+                        components: [
+                            {
+                                type: 2,
+                                style: 1,
+                                label: "Previous",
+                                custom_id: "previous",
+                            },
+                            {
+                                type: 2,
+                                style: 1,
+                                label: "Next",
+                                custom_id: "next",
+                            },
+                            {
+                                type: 2,
+                                style: 4,
+                                label: "Close",
+                                custom_id: "close",
+                            },
+                        ],
+                    },
+                ],
+            });
+        }
     }
 });
 
@@ -269,6 +333,15 @@ client.on("interactionCreate", async (interaction) => {
         }
     }
 
+    //checks if the button is the "close" button and if so deletes the message
+    if (interaction.customId === "close") {
+        await interaction.update({
+            content: "closing...",
+        });
+        await interaction.deleteReply();
+        return;
+    }
+    
     //updates the message with the new user's stats
     await interaction.update({
         content:
@@ -276,19 +349,14 @@ client.on("interactionCreate", async (interaction) => {
             "__**:\nNumber of Connections Played: " + users[currentUser].connections + 
             "\nwin: " + users[currentUser].win +
             "\nloss: " + users[currentUser].loss +
-            "\nwin rate: " + (users[currentUser].win / (users[currentUser].win + users[currentUser].loss)) * 100 + "%" +
+            "\nwin rate: " + ((users[currentUser].win / (users[currentUser].win + users[currentUser].loss)) * 100).toFixed(2) + "%" +
             "\nCorrect Answers: " + users[currentUser].answerCorrect + 
             "\nIncorrect Answers: " + users[currentUser].answerIncorrect + 
-            "\nCorrect Answer Rate: " + (users[currentUser].answerCorrect / (users[currentUser].answerCorrect + users[currentUser].answerIncorrect)) * 100 + "%" +
-            "\nYellow Correct: " + users[currentUser].yellowCorrect + 
-            "\nGreen Correct: " + users[currentUser].greenCorrect + 
-            "\nBlue Correct: " + users[currentUser].blueCorrect + 
-            "\nPurple Correct: " + users[currentUser].purpleCorrect,
+            "\nCorrect Answer Rate: " + ((users[currentUser].answerCorrect / (users[currentUser].answerCorrect + users[currentUser].answerIncorrect)) * 100).toFixed(2) + "%" +
+            "\n🟨 Correct: " + users[currentUser].yellowCorrect + 
+            "\n🟩 Correct: " + users[currentUser].greenCorrect + 
+            "\n🟦 Correct: " + users[currentUser].blueCorrect + 
+            "\n🟪 Correct: " + users[currentUser].purpleCorrect,
     });
-
-    //checks if the button is the "close" button and if so deletes the message
-    if (interaction.customId === "close") {
-        await interaction.deleteReply();
-    }
 });
 
