@@ -1,5 +1,3 @@
-// import admin from "firebase-admin";
-// import { initializeApp } from 'firebase-admin/app';
 import { initializeApp } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import { getFirestore, setDoc, doc, getDoc } from "firebase/firestore";
@@ -7,11 +5,7 @@ import { getFirestore, setDoc, doc, getDoc } from "firebase/firestore";
 import { config } from "./config.js";
 
 // Initialize Firebase
-// const cert = admin.credential.cert(config.serviceAccount);
-const app = initializeApp({
-    // credential: cert,
-    ...config.firebaseConfig,
-});
+const app = initializeApp(config.firebaseConfig);
 
 // Initialize Firebase Authentication and get a reference to the service
 export const auth = getAuth(app);

@@ -1,5 +1,4 @@
 import dotenv from 'dotenv';
-import serviceAccount from './service-account.json' assert {type: 'json'};
 
 dotenv.config();
 
@@ -21,5 +20,4 @@ export const config = {
       password: process.env.FIREBASE_AUTH_PASSWORD,
     },
   },
-  serviceAccount: serviceAccount,
 };
