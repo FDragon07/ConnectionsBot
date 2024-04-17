@@ -12,6 +12,12 @@ https://discord.com/oauth2/authorize?client_id=TODO&permissions=93264&scope=bot
 
 ## Development
 
+Install all dependencies with the following command:
+
+```bash
+npm install
+```
+
 Create a Firebase app with [Google Firebase][1] and create a `.env` file in the root directory of the project. The `.env` file should contain the following:
 
 ```env
@@ -40,6 +46,8 @@ firebase init firestore
 firebase deploy --only firestore
 ```
 
+Enable authentication in the Firebase console.
+The bot will use the email and password authentication method.
 Then create a user using the `createUser` command. This will create a user with the given username and password.
 
 ```bash
@@ -49,8 +57,8 @@ npm run createUser {username} {password}
 Then add the username and password to your `.env` file like so:
     
 ```env
-FIREBASE_USERNAME=<YOUR USERNAME>
-FIREBASE_PASSWORD=<YOUR PASSWORD>
+FIREBASE_AUTH_EMAIL=<YOUR USERNAME>
+FIREBASE_AUTH_PASSWORD=<YOUR PASSWORD>
 ```
 
 Finally, run the bot with the following command:
